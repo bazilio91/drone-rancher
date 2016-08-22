@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/drone/drone-go/plugin"
+	"github.com/drone/drone-plugin-go/plugin"
 	"github.com/rancher/go-rancher/client"
 )
 
