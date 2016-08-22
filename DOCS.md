@@ -5,7 +5,7 @@ The following parameters are used to configure this plugin:
 - `url` - url to your rancher server, including protocol and port
 - `access_key` - rancher api access key
 - `secret_key` - rancher api secret key
-- `service` - name of rancher service to act on
+- `service` - ID of rancher service to act on
 - `docker_image` - new image to assign to service, including tag (`drone/drone:latest`)
 - `start_first` - start the new container before stopping the old one, defaults to `true`
 - `confirm` - auto confirm the service upgrade if successful, defaults to `false`
@@ -19,8 +19,6 @@ deploy:
     url: https://example.rancher.com
     access_key: 1234567abcdefg
     secret_key: abcdefg1234567
-    service: drone/drone
+    service: 1s20
     docker_image: drone/drone:latest
 ```
-
-Note that if your `service` is part of a stack, you should use the notation `stackname/servicename` as this will make sure that the found service is part of the correct stack. If no stack is specified, this plugin will update the first service with a matching name which may not be what you want.

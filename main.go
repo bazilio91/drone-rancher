@@ -48,15 +48,6 @@ func main() {
 		vargs.Image = fmt.Sprintf("docker:%s", vargs.Image)
 	}
 
-	var wantedService, wantedStack string
-	if strings.Contains(vargs.Service, "/") {
-		parts := strings.SplitN(vargs.Service, "/", 2)
-		wantedStack = parts[0]
-		wantedService = parts[1]
-	} else {
-		wantedService = vargs.Service
-	}
-
 	rancher, err := client.NewRancherClient(&client.ClientOpts{
 		Url:       vargs.Url,
 		AccessKey: vargs.AccessKey,
@@ -68,43 +59,10 @@ func main() {
 		os.Exit(1)
 	}
 
-	var stackId string
-	if wantedStack != "" {
-		environments, err := rancher.Environment.List(&client.ListOpts{})
-		if err != nil {
-			fmt.Printf("Failed to list rancher environments: %s\n", err)
-			os.Exit(1)
-		}
+	service, err := rancher.Service.ById(vargs.Service)
 
-		for _, env := range environments.Data {
-			if env.Name == wantedStack {
-				stackId = env.Id
-			}
-		}
-
-		if stackId == "" {
-			fmt.Printf("Unable to find stack %s\n", wantedStack)
-			os.Exit(1)
-		}
-	}
-
-	services, err := rancher.Service.List(&client.ListOpts{})
 	if err != nil {
-		fmt.Printf("Failed to list rancher services: %s\n", err)
-		os.Exit(1)
-	}
-
-	found := false
-	var service client.Service
-	for _, svc := range services.Data {
-		if svc.Name == wantedService && ((wantedStack != "" && svc.EnvironmentId == stackId) || wantedStack == "") {
-			service = svc
-			found = true
-		}
-	}
-
-	if !found {
-		fmt.Printf("Unable to find service %s\n", vargs.Service)
+		fmt.Printf("Unable to find service %s: %s\n", vargs.Service, err)
 		os.Exit(1)
 	}
 
@@ -117,7 +75,7 @@ func main() {
 	}
 	upgrade.ToServiceStrategy = &client.ToServiceUpgradeStrategy{}
 
-	_, err = rancher.Service.ActionUpgrade(&service, upgrade)
+	_, err = rancher.Service.ActionUpgrade(service, upgrade)
 	if err != nil {
 		fmt.Printf("Unable to upgrade service %s: %s\n", vargs.Service, err)
 		os.Exit(1)
@@ -135,7 +93,7 @@ func main() {
 				return nil, fmt.Errorf("Service not upgraded: %s", s.State)
 			}
 			return s, nil
-		}, time.Duration(vargs.Timeout)*time.Second, 3*time.Second)
+		}, time.Duration(vargs.Timeout) * time.Second, 3 * time.Second)
 
 		if err != nil {
 			fmt.Printf("Error waiting for service upgrade to complete: %s", err)
